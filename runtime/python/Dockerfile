@@ -1,4 +1,4 @@
-FROM pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime
+FROM registry.cn-hangzhou.aliyuncs.com/super_1_images/linux_amd64_pytorch:2.0.1-cuda11.7-cudnn8-runtime
 ENV DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /opt/CosyVoice

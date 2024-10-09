@@ -11,21 +11,26 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
-import sys
 import argparse
 import logging
+import os
+import sys
+
 logging.getLogger('matplotlib').setLevel(logging.WARNING)
 from fastapi import FastAPI, UploadFile, Form, File
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import numpy as np
+
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append('{}/../../..'.format(ROOT_DIR))
 sys.path.append('{}/../../../third_party/Matcha-TTS'.format(ROOT_DIR))
 from cosyvoice.cli.cosyvoice import CosyVoice
 from cosyvoice.utils.file_utils import load_wav
+import torchaudio
+import torch
+import time
 
 app = FastAPI()
 # set cross region allowance
@@ -42,6 +47,27 @@ def generate_data(model_output):
         tts_audio = (i['tts_speech'].numpy() * (2 ** 15)).astype(np.int16).tobytes()
         yield tts_audio
 
+def generate_wav(model_output):
+    yield model_output
+
+@app.post("/inference")
+async def inference(tts_text: str = Form(), stream: bool = Form()):
+    print(f"tts_text{tts_text},stream{stream}")
+    prompt_wav = "../../../zero_shot_kf_prompt.wav"
+    prompt_text = "近年来，随着深度学习技术的飞速发展，自然语言处理领域取得了显著的进步。"
+    prompt_speech_16k = load_wav(prompt_wav, 16000)
+    model_output = cosyvoice.inference_zero_shot(tts_text, prompt_text, prompt_speech_16k, stream=stream)
+    if stream:
+        return StreamingResponse(generate_data(model_output))
+    else:
+        timestamp_ms = int(time.time() * 1000)
+        tts_speeches = []
+        for model_output in model_output:
+            tts_speeches.append(model_output['tts_speech'])
+        tts_speeches = torch.concat(tts_speeches, dim=1)
+        tts_fn = '{}.wav'.format(timestamp_ms)
+        torchaudio.save(tts_fn, tts_speeches, sample_rate=22050)
+        return StreamingResponse(generate_wav(tts_fn))
 
 @app.get("/inference_sft")
 async def inference_sft(tts_text: str = Form(), spk_id: str = Form()):

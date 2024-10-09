@@ -1,0 +1,81 @@
+<!--
+ * Copyright Longing  2024. All Rights Reserved. 
+ * @Author: 周腾蛟
+ * @Date: 2024-09-23 18:15:06
+ * @LastEditors: 周腾蛟
+ * @LastEditTime: 2024-09-29 17:12:53
+ * @FilePath: /tts-front-demo/stream.html
+ * @Description: 
+ * Other: 下面是变更记录，请主动填写。
+ * Change Log:
+ *   <author>      <time>       <version>     <description>
+ *    周腾蛟      2024-09-23      0.0.1          create
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+<textarea name="" rows="10" id="input" name="input"></textarea>
+<div>
+    <label for="stream">流式</label>
+    <input type="checkbox" id="stream" name="stream">
+</div>
+<button onclick="sourceOpen()">请求</button>
+<audio id="niu" src="" controls autoplay></audio>
+<script>
+    const audio = document.getElementById('niu')
+
+    async function sourceOpen() {
+        const input = document.getElementById('input').value
+        console.log(input)
+        const stream = document.getElementById('stream').checked
+        console.log(stream)
+
+        fetch("http://192.168.40.226:45000/queue/join", {
+            method: 'post',
+            body: JSON.stringify({
+                username: 'admin',
+                session_hash: 'dssf',
+                input: input
+            }),
+            headers: {
+                "Content-Type": "application/json",
+            },
+        }).then(async res => {
+            const {username, session_hash, run} = await res.json()
+            console.log(username, session_hash, run)
+            const url = `http://192.168.40.226:45000/queue/data?username=${username}&session_hash=${session_hash}&run=${run}`
+            const sse = new EventSource(url);
+
+            sse.onopen = (e) => {
+                console.log(e)
+            }
+            sse.onmessage = (e) => {
+                const data = JSON.parse(e.data)
+                console.log('--', data)
+                if (data.isOpen) {
+                    console.log(audio)
+                    audio.src = `http://192.168.40.226:45000/${data.url}`
+                    audio.play()
+                }
+            };
+
+            sse.addEventListener("error", (e) => {
+                console.log(e)
+                sse.close()
+            })
+        })
+
+
+    }
+
+</script>
+</body>
+
+</html>
