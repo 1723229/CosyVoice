@@ -92,6 +92,7 @@ async def inference(tts_text: str = Form(), stream: bool = Form()):
         return StreamingResponse(generate_wav(wav_name))
 
 
+
 @app.get("/inference_sft")
 async def inference_sft(tts_text: str = Form(), spk_id: str = Form()):
     model_output = cosyvoice.inference_sft(tts_text, spk_id)
