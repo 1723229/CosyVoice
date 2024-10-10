@@ -174,7 +174,7 @@ cd grpc && python3 client.py --port 50000 --mode <sft|zero_shot|cross_lingual|in
 docker run -d --runtime=nvidia -p 50000:50000 cosyvoice:v1.0 /bin/bash -c "cd /opt/CosyVoice/CosyVoice/runtime/python/fastapi && python3 server.py --port 50000 --model_dir iic/CosyVoice-300M && sleep infinity"
 cd fastapi && python3 client.py --port 50000 --mode <sft|zero_shot|cross_lingual|instruct>
 
-docker run -d --runtime=nvidia  -v /data/models:/models -p 50000:50000 cosyvoice:v1.0 /bin/bash -c "cd /opt/CosyVoice/CosyVoice/runtime/python/fastapi && python3 server.py --port 50000 --model_dir /models/CosyVoice-300M-25Hz && sleep infinity"
+docker run -d --runtime=nvidia  -v /data/models:/models  -v /data/tts_file:/opt/tts_file -p 50000:50000 cosyvoice:v1.0 /bin/bash -c "cd /opt/CosyVoice/CosyVoice/runtime/python/fastapi && python3 server.py --port 50000 --model_dir /models/CosyVoice-300M-25Hz && sleep infinity"
 ```
 
 ## Discussion & Communication
