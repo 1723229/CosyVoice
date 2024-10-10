@@ -44,7 +44,7 @@ def streamQueueJoin(data: GenerateJoinRequest, cosyvoice):
     username = data.username
     session_hash = data.session_hash
     run = ttsutil.getTime()
-    output_wav = InferCosyVoice(cosyvoice=cosyvoice, input=data.input, stream=True)
+    output_wav = InferCosyVoice(cosyvoice=cosyvoice, tts_text=data.input, stream=True)
 
     param = {'username': username, 'session_hash': session_hash, 'run': f'{run}'}
 
@@ -125,9 +125,9 @@ def streamAudio(username, session_hash, run):
     return StreamingResponse(yoyo, media_type="audio/wav")
 
 
-def InferCosyVoice(cosyvoice, input: str, stream: bool):
+def InferCosyVoice(cosyvoice, tts_text: str, stream: bool):
     output_wav = cosyvoice.inference_zero_shot(
-        input,
+        tts_text,
         '近年来，随着深度学习技术的飞速发展，自然语言处理领域取得了显著的进步。',
         prompt_speech_16k,
         stream=stream)
