@@ -65,20 +65,23 @@ def generate_wav(model_output):
 async def streamQueueJoin(data: GenerateJoinRequest):
     return tts_stream.streamQueueJoin(data, cosyvoice)
 
+
 @app.get("/stream/queue/data")
 async def streamQueueData(username: str, session_hash: str, run: str):
     return tts_stream.streamQueueData(username, session_hash, run)
 
+
 @app.get("/stream/{username}/{session_hash}/{run}")
 async def streamAudio(username, session_hash, run):
     return tts_stream.streamAudio(username, session_hash, run)
+
 
 @app.post("/inference")
 async def inference(tts_text: str = Form(), stream: bool = Form()):
     prompt_wav = "../../../zero_shot_kf_prompt.wav"
     prompt_text = "近年来，随着深度学习技术的飞速发展，自然语言处理领域取得了显著的进步。"
     prompt_speech_16k = load_wav(prompt_wav, 16000)
-    wav_name = str(time.time() * 1000) + str(random.randint(100000, 999999))
+
     model_output = cosyvoice.inference_zero_shot(tts_text, prompt_text, prompt_speech_16k, stream=stream)
     if stream:
         return StreamingResponse(generate_data(model_output))
@@ -87,10 +90,9 @@ async def inference(tts_text: str = Form(), stream: bool = Form()):
         for model_output in model_output:
             tts_speeches.append(model_output['tts_speech'])
         tts_speeches = torch.concat(tts_speeches, dim=1)
-        wav_name = '{}.wav'.format(wav_name)
-        torchaudio.save(wav_name, tts_speeches, sample_rate=22050)
-        return StreamingResponse(generate_wav(wav_name))
-
+        wav_name = str(time.time() * 1000) + str(random.randint(100000, 999999))
+        torchaudio.save('{}/{}.wav'.format("/opt/tts_file", wav_name), tts_speeches, sample_rate=22050)
+        return StreamingResponse(generate_wav('{}.wav'.format(wav_name)))
 
 
 @app.get("/inference_sft")

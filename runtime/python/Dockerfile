@@ -3,6 +3,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /opt/CosyVoice
 
+RUN mkdir /opt/tts_file
 RUN sed -i s@/archive.ubuntu.com/@/mirrors.aliyun.com/@g /etc/apt/sources.list
 RUN apt-get update -y
 RUN apt-get -y install git unzip git-lfs
