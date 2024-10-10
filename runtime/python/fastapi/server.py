@@ -63,7 +63,7 @@ def generate_wav(model_output):
 
 @app.post("/stream/queue/join")
 async def streamQueueJoin(data: GenerateJoinRequest):
-    return tts_stream.streamQueueJoin(data)
+    return tts_stream.streamQueueJoin(data, cosyvoice)
 
 
 @app.get("/stream/queue/data")
@@ -78,7 +78,6 @@ async def streamAudio(username, session_hash, run):
 
 @app.post("/inference")
 async def inference(tts_text: str = Form(), stream: bool = Form()):
-    print(f"tts_text{tts_text},stream{stream}")
     prompt_wav = "../../../zero_shot_kf_prompt.wav"
     prompt_text = "近年来，随着深度学习技术的飞速发展，自然语言处理领域取得了显著的进步。"
     prompt_speech_16k = load_wav(prompt_wav, 16000)

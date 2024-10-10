@@ -16,7 +16,6 @@ import os
 import sys
 from concurrent.futures import ThreadPoolExecutor
 
-from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -24,27 +23,13 @@ sys.path.append('{}/../../..'.format(ROOT_DIR))
 sys.path.append('{}/../../../third_party/Matcha-TTS'.format(ROOT_DIR))
 
 from fastapi.responses import StreamingResponse
-from fastapi import FastAPI
 import asyncio
 import runtime.python.stream_h5.tts_util as ttsutil
-from cosyvoice.cli.cosyvoice import CosyVoice
 from cosyvoice.utils.file_utils import load_wav
 
-cosyvoice = CosyVoice("/data/models/CosyVoice-300M-25Hz")
 prompt_speech_16k = load_wav('../../..//zero_shot_kf_prompt.wav', 16000)
 
-app = FastAPI()
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # 允许所有源，也可以指定具体的源
-    allow_credentials=True,
-    allow_methods=["*"],  # 允许所有方法
-    allow_headers=["*"],  # 允许所有头
-)
-
 streamDict = {}
-array = []
-
 
 class GenerateJoinRequest(BaseModel):
     username: str
@@ -55,12 +40,11 @@ class GenerateJoinRequest(BaseModel):
 thread_pool = ThreadPoolExecutor()
 
 
-# 发起tts请求
-def streamQueueJoin(data: GenerateJoinRequest):
+def streamQueueJoin(data: GenerateJoinRequest, cosyvoice):
     username = data.username
     session_hash = data.session_hash
     run = ttsutil.getTime()
-    wavs = InferCosyVoice(input=data.input, stream=True)
+    output_wav = InferCosyVoice(cosyvoice=cosyvoice, input=data.input, stream=True)
 
     param = {'username': username, 'session_hash': session_hash, 'run': f'{run}'}
 
@@ -69,13 +53,13 @@ def streamQueueJoin(data: GenerateJoinRequest):
     # 声明每段音频处理 完后的闭包
     # 添加到对应会话消息队列中
     def callback(params):
-        username = params['username']
+        user_name = params['username']
         session_hash = params['session_hash']
         run = params['run']
-        array = streamDict[username][session_hash][run]
-        array.append(params)
+        data_dict = streamDict[user_name][session_hash][run]
+        data_dict.append(params)
 
-    thread_pool.submit(ttsutil.processWavs, wavs, param, callback)
+    thread_pool.submit(ttsutil.processWavs, output_wav, param, callback)
 
     return {
         "username": username,
@@ -83,21 +67,18 @@ def streamQueueJoin(data: GenerateJoinRequest):
         "run": run
     }
 
-    # 消息推送，每生成一段音频便推送一次消息
-
 
 def streamQueueData(username: str, session_hash: str, run: str):
     index = 0
-
     async def generate_stream():
         nonlocal index
-        array = streamDict[username][session_hash][run]
-        while (True):
-            if (len(array) and index < len(array)):
-                v = array[index]
+        data_dict = streamDict[username][session_hash][run]
+        while True:
+            if len(data_dict) and index < len(data_dict):
+                v = data_dict[index]
                 yield f'data:{json.dumps(v)}\n\n'
                 index += 1
-                if (v.get('isClosed') == True):
+                if v.get('isClosed'):
                     break
             await asyncio.sleep(0.001)
 
@@ -106,27 +87,23 @@ def streamQueueData(username: str, session_hash: str, run: str):
     return StreamingResponse(yoyo, media_type="text/event-stream")
 
 
-    # 获取音频流
-
-
 def streamAudio(username, session_hash, run):
     dir = ttsutil.getDir(username, session_hash, run)
     index = 0
-
     try:
-        array = streamDict[username][session_hash][run]
+        data_dict = streamDict[username][session_hash][run]
     except:
-        array = None
+        data_dict = None
         pass
 
     async def generate_stream():
         nonlocal index
-        if (array != None):
+        if data_dict is not None:
             # 如果流式缓存中有临时记录，说明正在生成，否则是历史
-            while (True):
-                if (len(array) and index < len(array)):
-                    v = array[index]
-                    if (v.get('isClosed') == True):
+            while True:
+                if len(data_dict) and index < len(data_dict):
+                    v = data_dict[index]
+                    if v.get('isClosed'):
                         print('播放完成')
                         streamDict[username][session_hash][run] = None
                         break
@@ -135,7 +112,7 @@ def streamAudio(username, session_hash, run):
                 await asyncio.sleep(0.001)
 
         else:
-            while (True):
+            while True:
                 try:
                     yield ttsutil.fetchWav(f'{dir}/{index}.wav', index == 0)
                     index += 1
@@ -148,18 +125,12 @@ def streamAudio(username, session_hash, run):
     return StreamingResponse(yoyo, media_type="audio/wav")
 
 
-def InferCosyVoice(input: str, stream: bool):
-    wavs = cosyvoice.inference_zero_shot(
+def InferCosyVoice(cosyvoice, input: str, stream: bool):
+    output_wav = cosyvoice.inference_zero_shot(
         input,
         '近年来，随着深度学习技术的飞速发展，自然语言处理领域取得了显著的进步。',
         prompt_speech_16k,
         stream=stream)
     # 返回wav流
-    for wav in wavs:
+    for wav in output_wav:
         yield wav['tts_speech'].numpy()
-
-
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(app, host='0.0.0.0', port=45000)
