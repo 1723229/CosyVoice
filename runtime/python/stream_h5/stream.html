@@ -37,7 +37,7 @@
         const stream = document.getElementById('stream').checked
         console.log(stream)
 
-        fetch("http://192.168.40.226:45000/queue/join", {
+        fetch("http://10.200.57.5:45000/queue/join", {
             method: 'post',
             body: JSON.stringify({
                 username: 'admin',
@@ -50,7 +50,7 @@
         }).then(async res => {
             const {username, session_hash, run} = await res.json()
             console.log(username, session_hash, run)
-            const url = `http://192.168.40.226:45000/queue/data?username=${username}&session_hash=${session_hash}&run=${run}`
+            const url = `http://10.200.57.5:45000/queue/data?username=${username}&session_hash=${session_hash}&run=${run}`
             const sse = new EventSource(url);
 
             sse.onopen = (e) => {
@@ -58,10 +58,9 @@
             }
             sse.onmessage = (e) => {
                 const data = JSON.parse(e.data)
-                console.log('--', data)
                 if (data.isOpen) {
-                    console.log(audio)
-                    audio.src = `http://192.168.40.226:45000/${data.url}`
+                    console.log(data.url)
+                    audio.src = `http://10.200.57.5:45000/${data.url}`
                     audio.play()
                 }
             };

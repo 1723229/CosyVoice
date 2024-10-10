@@ -17,7 +17,7 @@ import sys
 from concurrent.futures import ThreadPoolExecutor
 
 from fastapi.middleware.cors import CORSMiddleware
-
+from pydantic import BaseModel
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append('{}/../../..'.format(ROOT_DIR))
 sys.path.append('{}/../../../third_party/Matcha-TTS'.format(ROOT_DIR))
@@ -29,7 +29,7 @@ import runtime.python.stream_h5.tts_util as ttsutil
 from cosyvoice.cli.cosyvoice import CosyVoice
 from cosyvoice.utils.file_utils import load_wav
 
-cosyvoice = CosyVoice("/root/CosyVoice/pretrained_models/CosyVoice-300M-25Hz")
+cosyvoice = CosyVoice("/data/models/CosyVoice-300M-25Hz")
 prompt_speech_16k = load_wav('../../..//zero_shot_kf_prompt.wav', 16000)
 
 app = FastAPI()
@@ -43,15 +43,21 @@ app.add_middleware(
 
 streamDict = {}
 array = []
+class GenerateJoinRequest(BaseModel):
+    username: str
+    session_hash: str
+    input: str
 
 thread_pool = ThreadPoolExecutor()
 
 
 # 发起tts请求
 @app.post("/queue/join")
-async def join(username: str, session_hash: str, texts: str):
+async def join(data: GenerateJoinRequest):
+    username = data.username
+    session_hash = data.session_hash
     run = ttsutil.getTime()
-    wavs = InferCosyVoice(input=texts, stream=True)
+    wavs = InferCosyVoice(input=data.input, stream=True)
 
     param = {'username': username, 'session_hash': session_hash, 'run': f'{run}'}
 
