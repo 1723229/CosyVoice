@@ -31,6 +31,7 @@ prompt_speech_16k = load_wav('../../..//zero_shot_kf_prompt.wav', 16000)
 
 streamDict = {}
 
+
 class GenerateJoinRequest(BaseModel):
     username: str
     session_hash: str
@@ -70,6 +71,7 @@ def streamQueueJoin(data: GenerateJoinRequest, cosyvoice):
 
 def streamQueueData(username: str, session_hash: str, run: str):
     index = 0
+
     async def generate_stream():
         nonlocal index
         data_dict = streamDict[username][session_hash][run]
