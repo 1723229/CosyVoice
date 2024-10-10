@@ -18,6 +18,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append('{}/../../..'.format(ROOT_DIR))
 sys.path.append('{}/../../../third_party/Matcha-TTS'.format(ROOT_DIR))
@@ -43,17 +44,19 @@ app.add_middleware(
 
 streamDict = {}
 array = []
+
+
 class GenerateJoinRequest(BaseModel):
     username: str
     session_hash: str
     input: str
 
+
 thread_pool = ThreadPoolExecutor()
 
 
 # 发起tts请求
-@app.post("/queue/join")
-async def join(data: GenerateJoinRequest):
+def streamQueueJoin(data: GenerateJoinRequest):
     username = data.username
     session_hash = data.session_hash
     run = ttsutil.getTime()
@@ -80,11 +83,10 @@ async def join(data: GenerateJoinRequest):
         "run": run
     }
 
+    # 消息推送，每生成一段音频便推送一次消息
 
-# 消息推送，每生成一段音频便推送一次消息
-@app.get("/queue/data")
-async def fetchAudio(username: str, session_hash: str, run: str):
-    print('流式请求来了没？')
+
+def streamQueueData(username: str, session_hash: str, run: str):
     index = 0
 
     async def generate_stream():
@@ -104,9 +106,10 @@ async def fetchAudio(username: str, session_hash: str, run: str):
     return StreamingResponse(yoyo, media_type="text/event-stream")
 
 
-# 获取音频流
-@app.get("/stream/{username}/{session_hash}/{run}")
-async def ttsStream(username, session_hash, run):
+    # 获取音频流
+
+
+def streamAudio(username, session_hash, run):
     dir = ttsutil.getDir(username, session_hash, run)
     index = 0
 

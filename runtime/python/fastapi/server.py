@@ -32,6 +32,8 @@ import torchaudio
 import torch
 import time
 import random
+import runtime.python.stream_h5.tts_stream as tts_stream
+from pydantic import BaseModel
 
 app = FastAPI()
 # set cross region allowance
@@ -43,6 +45,12 @@ app.add_middleware(
     allow_headers=["*"])
 
 
+class GenerateJoinRequest(BaseModel):
+    username: str
+    session_hash: str
+    input: str
+
+
 def generate_data(model_output):
     for i in model_output:
         tts_audio = (i['tts_speech'].numpy() * (2 ** 15)).astype(np.int16).tobytes()
@@ -51,6 +59,21 @@ def generate_data(model_output):
 
 def generate_wav(model_output):
     yield model_output
+
+
+@app.post("/stream/queue/join")
+async def streamQueueJoin(data: GenerateJoinRequest):
+    return tts_stream.streamQueueJoin(data)
+
+
+@app.get("/stream/queue/data")
+async def streamQueueData(username: str, session_hash: str, run: str):
+    return tts_stream.streamQueueData(username, session_hash, run)
+
+
+@app.get("/stream/{username}/{session_hash}/{run}")
+async def streamAudio(username, session_hash, run):
+    return tts_stream.streamAudio(username, session_hash, run)
 
 
 @app.post("/inference")

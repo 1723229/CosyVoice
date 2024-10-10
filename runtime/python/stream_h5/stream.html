@@ -22,10 +22,6 @@
 
 <body>
 <textarea name="" rows="10" id="input" name="input"></textarea>
-<div>
-    <label for="stream">流式</label>
-    <input type="checkbox" id="stream" name="stream">
-</div>
 <button onclick="sourceOpen()">请求</button>
 <audio id="niu" src="" controls autoplay></audio>
 <script>
@@ -34,10 +30,8 @@
     async function sourceOpen() {
         const input = document.getElementById('input').value
         console.log(input)
-        const stream = document.getElementById('stream').checked
-        console.log(stream)
 
-        fetch("http://10.200.57.5:45000/queue/join", {
+        fetch("http://10.200.57.5:50000/stream/queue/join", {
             method: 'post',
             body: JSON.stringify({
                 username: 'admin',
@@ -50,7 +44,7 @@
         }).then(async res => {
             const {username, session_hash, run} = await res.json()
             console.log(username, session_hash, run)
-            const url = `http://10.200.57.5:45000/queue/data?username=${username}&session_hash=${session_hash}&run=${run}`
+            const url = `http://10.200.57.5:50000/stream/queue/data?username=${username}&session_hash=${session_hash}&run=${run}`
             const sse = new EventSource(url);
 
             sse.onopen = (e) => {
@@ -60,7 +54,7 @@
                 const data = JSON.parse(e.data)
                 if (data.isOpen) {
                     console.log(data.url)
-                    audio.src = `http://10.200.57.5:45000/${data.url}`
+                    audio.src = `http://10.200.57.5:50000/${data.url}`
                     audio.play()
                 }
             };
