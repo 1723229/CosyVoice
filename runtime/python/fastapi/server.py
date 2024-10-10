@@ -65,16 +65,13 @@ def generate_wav(model_output):
 async def streamQueueJoin(data: GenerateJoinRequest):
     return tts_stream.streamQueueJoin(data, cosyvoice)
 
-
 @app.get("/stream/queue/data")
 async def streamQueueData(username: str, session_hash: str, run: str):
     return tts_stream.streamQueueData(username, session_hash, run)
 
-
 @app.get("/stream/{username}/{session_hash}/{run}")
 async def streamAudio(username, session_hash, run):
     return tts_stream.streamAudio(username, session_hash, run)
-
 
 @app.post("/inference")
 async def inference(tts_text: str = Form(), stream: bool = Form()):
