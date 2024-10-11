@@ -57,10 +57,6 @@ def generate_data(model_output):
         yield tts_audio
 
 
-def generate_wav(model_output):
-    yield model_output
-
-
 @app.post("/stream/queue/join")
 async def streamQueueJoin(data: GenerateJoinRequest):
     return tts_stream.streamQueueJoin(data, cosyvoice)
@@ -89,9 +85,9 @@ async def inference(tts_text: str = Form(), stream: bool = Form()):
         for model_output in model_output:
             tts_speeches.append(model_output['tts_speech'])
         tts_speeches = torch.concat(tts_speeches, dim=1)
-        wav_name = str(time.time() * 1000) + str(random.randint(100000, 999999))
-        torchaudio.save('{}/{}.wav'.format("/opt/tts_file", wav_name), tts_speeches, sample_rate=22050)
-        return StreamingResponse(generate_wav('{}.wav'.format(wav_name)))
+        wav_name = str(round(time.time() * 1000)) + str(random.randint(100000, 999999)) + ".wav"
+        torchaudio.save('{}/{}'.format("/opt/tts_file", wav_name), tts_speeches, sample_rate=22050)
+        return StreamingResponse(wav_name)
 
 
 @app.get("/inference_sft")
