@@ -52,13 +52,13 @@ def initStreamDict(root: dict, fields):
     session_hash = fields['session_hash']
     run = fields['run']
 
-    if root.get(username) == None:
+    if root.get(username) is None:
         root[username] = {}
 
-    if root[username].get(session_hash) == None:
+    if root[username].get(session_hash) is None:
         root[username][session_hash] = {}
 
-    if root[username][session_hash].get(run) == None:
+    if root[username][session_hash].get(run) is None:
         root[username][session_hash][run] = []
 
     return root

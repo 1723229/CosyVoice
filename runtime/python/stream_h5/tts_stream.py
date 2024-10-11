@@ -31,7 +31,6 @@ prompt_speech_16k = load_wav('../../..//zero_shot_kf_prompt.wav', 16000)
 
 streamDict = {}
 
-
 class GenerateJoinRequest(BaseModel):
     username: str
     session_hash: str
