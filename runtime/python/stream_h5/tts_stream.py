@@ -90,7 +90,7 @@ def streamQueueData(username: str, session_hash: str, run: str):
 
 
 def streamAudio(username, session_hash, run):
-    dir = ttsutil.getDir(username, session_hash, run)
+    data_dir = ttsutil.getDir(username, session_hash, run)
     index = 0
     try:
         data_dict = streamDict[username][session_hash][run]
@@ -109,14 +109,14 @@ def streamAudio(username, session_hash, run):
                         print('播放完成')
                         streamDict[username][session_hash][run] = None
                         break
-                    yield ttsutil.fetchWav(f'{dir}/{index}.wav', index == 0)
+                    yield ttsutil.fetchWav(f'{data_dir}/{index}.wav', index == 0)
                     index += 1
                 await asyncio.sleep(0.001)
 
         else:
             while True:
                 try:
-                    yield ttsutil.fetchWav(f'{dir}/{index}.wav', index == 0)
+                    yield ttsutil.fetchWav(f'{data_dir}/{index}.wav', index == 0)
                     index += 1
                 except IOError as e:
                     print('读取不到文件，请求结束', e)
