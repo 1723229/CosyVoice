@@ -33,7 +33,6 @@ import torch
 import time
 import random
 import runtime.python.stream_h5.tts_stream as tts_stream
-from pydantic import BaseModel
 
 app = FastAPI()
 # set cross region allowance
@@ -45,12 +44,6 @@ app.add_middleware(
     allow_headers=["*"])
 
 
-class GenerateJoinRequest(BaseModel):
-    username: str
-    session_hash: str
-    input: str
-
-
 def generate_data(model_output):
     for i in model_output:
         tts_audio = (i['tts_speech'].numpy() * (2 ** 15)).astype(np.int16).tobytes()
@@ -58,18 +51,18 @@ def generate_data(model_output):
 
 
 @app.post("/stream/queue/join")
-async def streamQueueJoin(data: GenerateJoinRequest):
-    return tts_stream.streamQueueJoin(data, cosyvoice)
+async def stream_queue_join(data: tts_stream.GenerateJoinRequest):
+    return tts_stream.stream_queue_join(data, cosyvoice)
 
 
 @app.get("/stream/queue/data")
-async def streamQueueData(username: str, session_hash: str, run: str):
-    return tts_stream.streamQueueData(username, session_hash, run)
+async def stream_queue_data(username: str, session_hash: str, run: str):
+    return tts_stream.stream_queue_data(username, session_hash, run)
 
 
 @app.get("/stream/{username}/{session_hash}/{run}")
-async def streamAudio(username, session_hash, run):
-    return tts_stream.streamAudio(username, session_hash, run)
+async def stream_audio(username, session_hash, run):
+    return tts_stream.stream_audio(username, session_hash, run)
 
 
 @app.post("/inference")
@@ -87,7 +80,7 @@ async def inference(tts_text: str = Form(), stream: bool = Form()):
         tts_speeches = torch.concat(tts_speeches, dim=1)
         wav_name = str(round(time.time() * 1000)) + str(random.randint(100000, 999999)) + ".wav"
         torchaudio.save('{}/{}'.format("/opt/tts_file", wav_name), tts_speeches, sample_rate=22050)
-        return StreamingResponse(wav_name)
+        return StreamingResponse(net_url + wav_name)
 
 
 @app.get("/inference_sft")
@@ -123,8 +116,12 @@ if __name__ == '__main__':
                         default=50000)
     parser.add_argument('--model_dir',
                         type=str,
-                        default='iic/CosyVoice-300M',
+                        default='/data/models/CosyVoice-300M-25Hz',
                         help='local path or modelscope repo id')
+    parser.add_argument('--net_url',
+                        type=str,
+                        default='')
     args = parser.parse_args()
     cosyvoice = CosyVoice(args.model_dir)
+    net_url = args.net_url
     uvicorn.run(app, host="0.0.0.0", port=args.port)

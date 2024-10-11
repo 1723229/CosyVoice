@@ -9,7 +9,7 @@ import numpy as np
 from numba import jit
 
 
-@jit
+# @jit
 def float_to_int16(audio: np.ndarray) -> np.ndarray:
     am = int(math.ceil(float(np.abs(audio).max())) * 32768)
     am = 32767 * 32768 // am
@@ -25,7 +25,7 @@ def getTime():
 
 
 def getDir(username, session_hash, run):
-    return f'media/{username}/{session_hash}/{run}'
+    return f'/opt/tts_file/{username}/{session_hash}/{run}'
 
 
 '''

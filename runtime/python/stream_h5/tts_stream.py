@@ -40,7 +40,7 @@ class GenerateJoinRequest(BaseModel):
 thread_pool = ThreadPoolExecutor()
 
 
-def streamQueueJoin(data: GenerateJoinRequest, cosyvoice):
+def stream_queue_join(data: GenerateJoinRequest, cosyvoice):
     username = data.username
     session_hash = data.session_hash
     run = ttsutil.getTime()
@@ -68,7 +68,7 @@ def streamQueueJoin(data: GenerateJoinRequest, cosyvoice):
     }
 
 
-def streamQueueData(username: str, session_hash: str, run: str):
+def stream_queue_data(username: str, session_hash: str, run: str):
     index = 0
 
     async def generate_stream():
@@ -88,7 +88,7 @@ def streamQueueData(username: str, session_hash: str, run: str):
     return StreamingResponse(yoyo, media_type="text/event-stream")
 
 
-def streamAudio(username, session_hash, run):
+def stream_audio(username, session_hash, run):
     data_dir = ttsutil.getDir(username, session_hash, run)
     index = 0
     try:
