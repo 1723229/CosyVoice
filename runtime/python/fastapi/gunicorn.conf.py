@@ -25,7 +25,7 @@ max_requests = 100
 # 设置进程文件目录
 pidfile = '/home/gunicorn.pid'
 # 设置访问日志和错误信息日志路径
-accesslog = '/home/gunicorn.access.log'
+accesslog = '/home/gunicorn_access.log'
 errorlog = '/home/gunicorn_error.log'
 # 日志级别，这个日志级别指的是错误日志的级别，而访问日志的级别无法设置
 loglevel = 'info'
