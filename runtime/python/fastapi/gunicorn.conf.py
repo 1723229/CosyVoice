@@ -45,7 +45,7 @@ keepalive = 3
 # 值是0~8190的数字。此参数可以防止任何DDOS攻击
 limit_request_line = 5120
 # 限制HTTP请求中请求头字段的数量。
-#  此字段用于限制请求头字段的数量以防止DDOS攻击，与limit-request-field-size一起使用可以提高安全性。
+# 此字段用于限制请求头字段的数量以防止DDOS攻击，与limit-request-field-size一起使用可以提高安全性。
 # 默认情况下，这个值为100，这个值不能超过32768
 limit_request_fields = 101
 # 限制HTTP请求中请求头的大小，默认情况下这个值为8190。
